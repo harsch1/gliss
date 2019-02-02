@@ -1,23 +1,34 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 public class glider : MonoBehaviour {
 	public float speed;
 	public float rotation = 0f;
 	public float maxRot;
 
+	public audio audioEngine;
 	public Camera camera;
 
 	public float rotAmount;
 
 	public GameObject trace;
+	public GameObject ripple;
+	public GameObject tip;
 
 	public bool started;
 
-	// Use this for initialization
-	void Start () {
+	private float timer = 0f;
 
+	public float delayTime;
+
+	// Use this for initialization
+	void Awake () {
+
+		QualitySettings.vSyncCount = 0;
+	Application.targetFrameRate = 60;
 
 	}
 	
@@ -25,6 +36,10 @@ public class glider : MonoBehaviour {
 	void Update () {
 		if (started) {
 			int mult = 1;
+			if (Input.GetKey(KeyCode.Escape))
+			{
+				Application.Quit();
+			}
 			if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
 				mult = -1;
 			}
@@ -37,7 +52,8 @@ public class glider : MonoBehaviour {
 				// gameObject.GetComponent<Rigidbody>().velocity = Vector3.up * speed;
 			}
 		}
-		
+
+		timer -= Time.deltaTime;
 	}
 	void FixedUpdate()
 	{
@@ -49,9 +65,19 @@ public class glider : MonoBehaviour {
 			Vector3 movement = gameObject.transform.rotation * Vector3.up * speed/100;
 			gameObject.GetComponent<Rigidbody>().velocity = movement;
 		}
-	}	
-	void OnTriggerEnter(Collider other)
-	{
-		// Debug.Log(other.gameObject.name);
+	}
+
+	void OnTriggerEnter(Collider other) {
+		if (timer <= 0f) {
+//			Debug.Log(other.gameObject.GetComponent<Renderer>().material.color.a);
+			audioEngine.bang(other.gameObject.GetComponent<Renderer>().material.color.a);
+			GameObject newRipple = GameObject.Instantiate(ripple, tip.transform.position,
+				gameObject.transform.rotation);
+			newRipple.GetComponent<trace>().glider = this;
+			newRipple.GetComponent<trace>().oldColor = other.GetComponent<Renderer>().material.color;
+			newRipple.GetComponent<Renderer>().material.color = other.GetComponent<Renderer>().material.color;
+			
+			timer = delayTime;
+		}
 	}
 }
